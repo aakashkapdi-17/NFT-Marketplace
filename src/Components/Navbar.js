@@ -8,7 +8,7 @@ import { NFTContext } from "@/context/NFTmarketplaceContext";
 
 const Navbar = () => {
   const { accountAddress, setAccountAddress } = useContext(NFTContext);
-  const { connectToWallet } = useContext(NFTContext);
+  const { connectTowallet } = useContext(NFTContext);
 
   return (
     <div>
@@ -17,7 +17,7 @@ const Navbar = () => {
         <button
           className="p-3 overflow-hidden border-2 w-fit bg-slate-500 hover:bg-transparent disabled:bg-transparent"
           onClick={() => {
-            connectToWallet();
+            connectTowallet();
           }}
           disabled={accountAddress}
         >

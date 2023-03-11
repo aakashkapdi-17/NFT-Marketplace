@@ -1,9 +1,9 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useCallback } from "react";
 import Image from "next/image";
 import nft_image_1 from "../assets/img/nft-image-1.png";
 import { showError } from "./Toast";
-import { StyledDropZone } from "react-drop-zone";
-import "react-drop-zone/dist/styles.css";
+import { useDropzone } from "react-dropzone";
+
 import { NFTContext } from "@/context/NFTmarketplaceContext";
 
 const UploadNFT = () => {
@@ -13,7 +13,13 @@ const UploadNFT = () => {
   const [image, setImage] = useState(null);
   const [showImage, setShowImage] = useState(null);
 
-  const { connectToContract } = useContext(NFTContext);
+  const { UploadNFT } = useContext(NFTContext);
+
+  const onDrop = useCallback((acceptedFiles) => {
+    console.log(acceptedFiles[0]);
+    console.log(acceptedFiles[0].URL);
+  }, []);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   const handleSubmitNFT = () => {
     if (name == "" || image == null) {
@@ -23,7 +29,7 @@ const UploadNFT = () => {
       if (listNFT && (price == null || price == 0)) {
         showError("Price cannot be 0 when you want to list the NFT");
       } else {
-        console.log(name, price, listNFT);
+        UploadNFT(name, image, price, listNFT);
       }
     }
     setName("");
@@ -67,19 +73,20 @@ const UploadNFT = () => {
         </div>
 
         <div className="relative h-60 w-72 lg:h-80">
-          {image ? (
+          {showImage ? (
             <>
               <Image src={showImage} fill className="rounded-3xl" />
             </>
           ) : (
             <>
-              <StyledDropZone
-                onDrop={(file, text) => {
-                  setShowImage(URL.createObjectURL(file));
-                  setImage(file);
-                }}
-                className="relative h-60 w-72 lg:h-80"
-              />
+              <div {...getRootProps()}>
+                <input {...getInputProps()} />
+                {isDragActive ? (
+                  <p>Drop the files here ...</p>
+                ) : (
+                  <p>Drag 'n' drop some files here, or click to select files</p>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -87,7 +94,7 @@ const UploadNFT = () => {
       <div>
         <div className="flex flex-col items-center">
           <button
-            className=" text-red-500 align-middle hover:scale-110 cursor-pointer"
+            className="text-red-500 align-middle cursor-pointer hover:scale-110"
             hidden={image ? false : true}
             onClick={() => setImage(null)}
           >
@@ -98,9 +105,11 @@ const UploadNFT = () => {
         <div className="flex flex-col items-center">
           <button
             className="p-4 m-2 text-white rounded-xl bg-slate-700 hover:scale-105"
-            onClick={() => connectToContract(image, name)}
+            onClick={() => {
+              handleSubmitNFT();
+            }}
           >
-            Buy Now
+            Submit NFT
           </button>
         </div>
       </div>

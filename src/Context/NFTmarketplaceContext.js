@@ -12,44 +12,21 @@ export const NFTContext = createContext();
 
 function Context({ children }) {
   const [accountAddress, setAccountAddress] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [contract, setContract] = useState(null);
   const contractABI = nftMarketplaceConstants["abi"];
-  const contractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+  const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
   const NFT_API =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweEVDZTNFRkNCMUM2RTU0NTYxMzQ4MGMwQ0I2ZWU1MTRFMTRkMDJGQUYiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTY3ODA4MzAxMzQ2MiwibmFtZSI6Ik5GVF9NYXJrZXBsYWNlIn0.c5tgXtlOjcjo_QVZSMMZ_JUuqcVYfAA14MNcRiFrXyo";
 
-  let signer;
-  let contract;
-  let provider;
+  useEffect(() => {
+    connectToContract();
+  }, [signer]);
 
-  const connectToContract = async (image, name) => {
-    try {
-      const _cid = await storeNFTtoApi(image, name);
-      connectToWallet();
-      contract = new Contract(contractAddress, contractABI, provider);
-      console.log(contract);
-      const trx = await contract.createItem(_cid, 0, false);
-      const result = trx.wait();
-      console.log(result);
-    } catch (e) {
-      showError(e.message);
-      console.log(e);
-    }
-  };
-
-  const storeNFTtoApi = async (image, name) => {
-    const nftstorage = new NFTStorage({ token: NFT_API });
-
-    const result = await nftstorage.store({
-      image: image,
-      name: name,
-      description: " ",
-    });
-
-    return result.ipnft;
-  };
-
-  const connectToWallet = async () => {
+  //Connect to Wallet
+  const connectTowallet = async () => {
+    let provider;
     try {
       if (window.ethereum == null) {
         console.log("MetaMask not installed; using read-only defaults");
@@ -57,23 +34,58 @@ function Context({ children }) {
       } else {
         provider = new ethers.BrowserProvider(window.ethereum);
         await provider.getSigner().then((_signer) => {
+          setSigner(_signer);
           setAccountAddress(_signer.address);
-          signer = _signer;
         });
       }
     } catch (e) {
-      console.log(e);
-      showError("Error connecting to Wallet");
+      showError(e.message);
     }
+  };
+
+  //connect to contract
+  const connectToContract = async () => {
+    try {
+      const _contract = new Contract(contractAddress, contractABI, signer);
+      setContract(_contract);
+    } catch (e) {
+      showError(e.message);
+    }
+  };
+
+  //Store NFT to API
+  const storeNFTtoAPI = async (name, image) => {
+    try {
+      const nftstorage = new NFTStorage({ token: NFT_API });
+      const result = await nftstorage.store({
+        image: new File([image], image.name, { type: image.type }),
+        name: name,
+        description: " ",
+      });
+      return result.ipnft;
+    } catch (e) {
+      showError(e.message);
+    }
+  };
+
+  //Upload NFT
+  const UploadNFT = async (name, image, price, listNFT) => {
+    try {
+      const _cid = await storeNFTtoAPI(name, image);
+      contract.createItem(_cid, price, listNFT);
+    } catch (e) {
+      console.log(e.message);
+    }
+    console.log(name, image);
   };
 
   return (
     <NFTContext.Provider
       value={{
         accountAddress,
-        setAccountAddress,
-        connectToWallet,
-        connectToContract,
+        connectTowallet,
+        contract,
+        UploadNFT,
       }}
     >
       {children}
