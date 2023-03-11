@@ -16,10 +16,7 @@ contract NFTMarketplace is ERC721, ERC721Enumerable, Ownable {
 
     struct Item{
         uint256 tokenId;
-        string name;
-        string description;
         string cid;
-        uint256 buyprice;
         uint256 price;
         bool isListed;
     }
@@ -54,10 +51,14 @@ contract NFTMarketplace is ERC721, ERC721Enumerable, Ownable {
     }
 
     
-    function createItem() public{
+    function createItem(string memory _cid,uint256 _price,bool _isListed) public returns(uint256) {
         uint256  tokenId=safeMint(msg.sender);
-        Item memory newItem=Item(tokenId,"a","a","a",0,0,false);
-        idItemMap[tokenId]=newItem;
+        idItemMap[tokenId]=Item(tokenId,_cid,_price,_isListed);
+        return tokenId;
+    }
+
+    function returnItem(uint256 _tokenId) public view returns(uint256,string memory,uint256,bool){
+        return (idItemMap[_tokenId].tokenId,idItemMap[_tokenId].cid,idItemMap[_tokenId].price,idItemMap[_tokenId].isListed);
     }
 
     function listItem(uint256 tokenId)public payable {
@@ -70,7 +71,6 @@ contract NFTMarketplace is ERC721, ERC721Enumerable, Ownable {
     function transfer(uint256 tokenId) public payable{
         require(idItemMap[tokenId].isListed,"NFT not listed");
         require(msg.value==idItemMap[tokenId].price,"Price of NFT not correct");
-        idItemMap[tokenId].buyprice=idItemMap[tokenId].price;
         (bool sent,) = payable(ownerOf(tokenId)).call{value: msg.value}("");
         require(sent, "Failed to send Ether");
         _transfer(ownerOf(tokenId),msg.sender,tokenId);

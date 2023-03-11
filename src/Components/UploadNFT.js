@@ -11,8 +11,9 @@ const UploadNFT = () => {
   const [price, setPrice] = useState(0);
   const [listNFT, setListNFT] = useState(false);
   const [image, setImage] = useState(null);
+  const [showImage, setShowImage] = useState(null);
 
-  const { getContract } = useContext(NFTContext);
+  const { connectToContract } = useContext(NFTContext);
 
   const handleSubmitNFT = () => {
     if (name == "" || image == null) {
@@ -68,12 +69,15 @@ const UploadNFT = () => {
         <div className="relative h-60 w-72 lg:h-80">
           {image ? (
             <>
-              <Image src={image} fill className="rounded-3xl" />
+              <Image src={showImage} fill className="rounded-3xl" />
             </>
           ) : (
             <>
               <StyledDropZone
-                onDrop={(file, text) => setImage(URL.createObjectURL(file))}
+                onDrop={(file, text) => {
+                  setShowImage(URL.createObjectURL(file));
+                  setImage(file);
+                }}
                 className="relative h-60 w-72 lg:h-80"
               />
             </>
@@ -94,7 +98,7 @@ const UploadNFT = () => {
         <div className="flex flex-col items-center">
           <button
             className="p-4 m-2 text-white rounded-xl bg-slate-700 hover:scale-105"
-            onClick={() => getContract()}
+            onClick={() => connectToContract(image, name)}
           >
             Buy Now
           </button>
